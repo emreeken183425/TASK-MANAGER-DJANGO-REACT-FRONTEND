@@ -1,33 +1,11 @@
 import { Modal } from "bootstrap";
 import { Component } from "react";
 import "./App.css";
+import "./index.css"
+import axios from 'axios'
 import CustomModal from './components/Modal.jsx'
-const tasks = [
-  {
-    id: 1,
-    title: "Dunning",
-    description: "sending dunning letters...",
-    completed: false,
-  },
-  {
-    id: 2,
-    title: "Order release",
-    description: "sending dunning letters...",
-    completed: true,
-  },
-  {
-    id: 3,
-    title: "Weekley reports",
-    description: "sending dunning letters...",
-    completed: false,
-  },
-  {
-    id: 4,
-    title: "Branch",
-    description: "sending dunning letters...",
-    completed: false,
-  },
-];
+
+
 
 class App extends Component {
   constructor(props) {
@@ -40,10 +18,22 @@ class App extends Component {
         description:"",
         completed:false
       },
-      taskList: tasks,
+      todoList:[]
 
     };
   }
+
+
+componentDidMount(){
+  this.refreshList();
+}
+
+refreshList=()=>{
+  axios
+  .get(`http://localhost:8000/api/tasks`)
+  .then(res=>this.state({todoList:res.data} ))
+  .catch(err=>console.log(err))}
+
 
 toggle=()=>{
   this.setState({modal:!this.state.modal})
@@ -51,20 +41,29 @@ toggle=()=>{
 
 handleSubmit=item=>{
   this.toggle();
-  alert("saved!" +JSON.stringify(item) )
+  if (item.id){
+axios
+.put(`http://localhost:8000/api/tasks/${item.id}/`,item)
+.then(res=>this.refreshList() )
+  }
+  axios.post("http://localhost:8000/api/tasks/",item)
+  .then(res=>this.refreshList())
 }
+
 handleDelete=item=>{
  
-  alert("Deleted!" +JSON.stringify(item) )
+  axios
+.delete(`http://localhost:8000/api/tasks/${item.id}/`)
+.then(res=>this.refreshList() )
 }
 
 createItem=()=>{
-  const Item={title:"",modal:!this.state.modal };
-  this.setState({activeItem:item,modal:!this.state.modal })
+const item ={title:"",modal:!this.state.modal };
+this.setState({activeItem:item,modal:!this.state.modal })
 }
 
-editItem=item=>{
-  this.setState({activeItem:item,modal:!this.state.modal })
+editItem= item =>{
+  this.setState({activeItem: item , modal:!this.state.modal })
 }
 
 
@@ -77,8 +76,7 @@ editItem=item=>{
   };
 
   renderTablist = () => {
-    return
-   ( <div className="my-5 tab-list ">
+    return( <div className="my-5 tab-list ">
       <span
         onClick={() => this.displayCompleted(true)}
         className={this.state.viewCompleted ? "active" : ""}
@@ -95,7 +93,7 @@ Incompleted
 
 renderItems=()=>{
   const{viewCompleted}=this.state;
-  const newItems=this.state.taskList.filter(
+  const newItems=this.state.todoList.filter(
     item=>item.completed == viewCompleted
   )
   return newItems.map(item=>(
